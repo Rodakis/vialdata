@@ -1,0 +1,27 @@
+name: vialdata_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+3
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Aquí están tus librerías CORRECTAS (sin duplicados):
+  cupertino_icons: ^1.0.6
+  intl: ^0.19.0
+  image_picker: ^1.0.7
+  shared_preferences: ^2.5.4
+  share_plus: ^12.0.1
+  flutter_local_notifications: ^20.1.0
+  timezone: ^0.10.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
