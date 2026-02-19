@@ -8,12 +8,12 @@ import '../services/storage_service.dart';
 
 class InformeDiarioFormScreen extends StatefulWidget {
   final ObraModel obra;
-  final InformeDiarioModel? informeExistente; // <--- ESTO ES NUEVO: Puede venir nulo o con datos
+  final InformeDiarioModel? informeExistente;
 
   const InformeDiarioFormScreen({
     Key? key, 
     required this.obra, 
-    this.informeExistente // Lo recibimos opcionalmente
+    this.informeExistente
   }) : super(key: key);
 
   @override
@@ -23,8 +23,7 @@ class InformeDiarioFormScreen extends StatefulWidget {
 class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  // Variables de estado
-  late DateTime _fecha; // Usamos 'late' porque la definimos al iniciar
+  late DateTime _fecha;
   final TextEditingController _horasController = TextEditingController();
   final TextEditingController _kmController = TextEditingController();
 
@@ -44,18 +43,14 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
     if (widget.informeExistente != null) {
       final inf = widget.informeExistente!;
       _fecha = inf.fecha;
-      
-      // AGREGAMOS "?? ''" AL FINAL DE TODO PARA EVITAR EL ERROR DE NULOS
       _horasController.text = inf.horasMaquina ?? ''; 
       _kmController.text = inf.kmRecorridos ?? '';
-      
       _actividades = inf.actividades ?? '';
       _avance = inf.avanceDescripcion ?? '';
       _personal = inf.personal ?? '';
       _equipos = inf.equipos ?? '';
       _incidencias = inf.incidencias ?? '';
       _comentarios = inf.comentariosAdicionales ?? '';
-      
       _fotosRutas = List.from(inf.fotosRutas); 
     } else {
       _fecha = DateTime.now();
@@ -75,11 +70,10 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Determinamos el ID: Si ya existía, usamos el mismo. Si es nuevo, creamos uno.
       final String idFinal = widget.informeExistente?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
       final nuevoInforme = InformeDiarioModel(
-        id: idFinal, // <--- ID CLAVE
+        id: idFinal,
         fecha: _fecha,
         obraId: widget.obra.id,
         nombreObra: widget.obra.nombre,
@@ -95,11 +89,9 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       );
 
       if (widget.informeExistente != null) {
-        // MODO EDICIÓN: Actualizamos
         await StorageService.updateInforme(nuevoInforme.toJson());
         if (mounted) _mostrarMensaje('Informe actualizado correctamente');
       } else {
-        // MODO CREACIÓN: Guardamos nuevo
         await StorageService.saveInforme(nuevoInforme.toJson());
         if (mounted) _mostrarMensaje('Informe creado correctamente');
       }
@@ -114,7 +106,6 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Si estamos editando, cambiamos el título
     final titulo = widget.informeExistente != null ? 'Editar Informe' : 'Nuevo Informe Diario';
 
     return Scaffold(
@@ -130,7 +121,6 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // CABECERA
               Card(
                 color: Colors.orange.shade50,
                 child: Padding(
@@ -188,10 +178,6 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Para los campos de texto, usamos initialValue solo si es la primera vez, 
-              // pero como usamos variables (_actividades) conectadas al onSaved, 
-              // lo mejor en flutter para editar es usar TextFormField con 'initialValue' directo de la variable.
-              
               _buildTextInput('Actividades Realizadas', _actividades, (val) => _actividades = val, lines: 3),
               _buildTextInput('Descripción del Avance', _avance, (val) => _avance = val, lines: 2),
               _buildTextInput('Personal en Obra', _personal, (val) => _personal = val, lines: 2),
@@ -201,7 +187,6 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
 
               const SizedBox(height: 20),
               _buildSectionTitle('Evidencia Fotográfica'),
-              // ... (Logica de fotos igual que antes) ...
                Row(
                 children: [
                   ElevatedButton.icon(onPressed: () => _pickImage(ImageSource.camera), icon: const Icon(Icons.camera_alt), label: const Text('Cámara')),
@@ -218,7 +203,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                     itemCount: _fotosRutas.length,
                     itemBuilder: (ctx, i) => Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: Stack( // Stack para poder borrar fotos
+                      child: Stack(
                         children: [
                           Image.file(File(_fotosRutas[i]), width: 100, height: 100, fit: BoxFit.cover),
                           Positioned(
@@ -258,7 +243,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       children: [
         _buildSectionTitle(label),
         TextFormField(
-          initialValue: valorInicial, // <--- ESTO PERMITE EDITAR EL TEXTO QUE YA ESTABA
+          initialValue: valorInicial,
           decoration: const InputDecoration(border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
           maxLines: lines,
           onSaved: (val) => onSave(val ?? ''),

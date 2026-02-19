@@ -4,17 +4,28 @@ class RemitoModel {
   final String obraId;
   final String nombreObra;
   
-  final String nroRemito; // Ahora será automático
-  final String proveedor;
-  final String patente;
-  final String chofer;
+  // 1. Identificación
+  final String nroRemito; // Automático
+  final String nroGuia;
   
-  // --- CAMPO NUEVO ---
-  final String nroGuia; 
-  // -------------------
-
+  // 2. Origen y Destino
+  final String procedencia;
+  final String destino;
+  
+  // 3. Datos de Carga
   final String material;
   final String cantidad;
+  final String horaDescarga;
+  final String recibidor;
+  
+  // 4. Transporte
+  final String empresaTransportista;
+  final String patenteCamion;
+  final String patenteAcoplado;
+  final String chofer;
+  
+  // 5. Fotos y Cierre
+  final String observaciones;
   final String fotoRuta;
 
   RemitoModel({
@@ -23,12 +34,18 @@ class RemitoModel {
     required this.obraId,
     required this.nombreObra,
     required this.nroRemito,
-    this.proveedor = '',
-    this.patente = '',
-    this.chofer = '',
-    this.nroGuia = '', // Inicializamos vacío por defecto
+    this.nroGuia = '',
+    this.procedencia = '',
+    this.destino = '',
     required this.material,
     required this.cantidad,
+    this.horaDescarga = '',
+    this.recibidor = '',
+    this.empresaTransportista = '',
+    this.patenteCamion = '',
+    this.patenteAcoplado = '',
+    this.chofer = '',
+    this.observaciones = '',
     required this.fotoRuta,
   });
 
@@ -39,12 +56,18 @@ class RemitoModel {
       'obraId': obraId,
       'obra': nombreObra,
       'nroRemito': nroRemito,
-      'proveedor': proveedor,
-      'patente': patente,
-      'chofer': chofer,
-      'nroGuia': nroGuia, // Guardamos el nuevo campo
+      'nroGuia': nroGuia,
+      'procedencia': procedencia,
+      'destino': destino,
       'material': material,
       'cantidad': cantidad,
+      'horaDescarga': horaDescarga,
+      'recibidor': recibidor,
+      'empresaTransportista': empresaTransportista,
+      'patenteCamion': patenteCamion,
+      'patenteAcoplado': patenteAcoplado,
+      'chofer': chofer,
+      'observaciones': observaciones,
       'fotoRuta': fotoRuta,
     };
   }

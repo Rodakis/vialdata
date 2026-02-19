@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../models/informe_diario_model.dart';
 import '../models/obra_model.dart';
-import '../models/remito_model.dart'; // <--- IMPORTANTE: Importar modelo Remito
+import '../models/remito_model.dart';
 import 'informe_diario_form_screen.dart';
-import 'remito_form_screen.dart';     // <--- IMPORTANTE: Importar pantalla Remito
+import 'remito_form_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -63,12 +63,10 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
           itemBuilder: (context, index) {
             final item = snapshot.data![index];
             
-            // Protección de datos nulos para la vista
             final material = item['material'] ?? '---';
             final cantidad = item['cantidad'] ?? '---';
             final obra = item['obra'] ?? 'Sin Obra';
             
-            // Manejo seguro de fecha
             String fechaTexto = '---';
             if (item['fecha'] != null) {
               try {
@@ -86,8 +84,6 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
                 subtitle: Text('Obra: $obra\nFecha: $fechaTexto\nTap para editar...'),
                 isThreeLine: true,
                 trailing: const Icon(Icons.edit, color: Colors.grey),
-                
-                // --- AQUÍ ESTÁ EL CLIC ---
                 onTap: () async {
                   await _abrirEditorRemito(item);
                 },
@@ -99,54 +95,54 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
     );
   }
 
-  // --- FUNCIÓN QUE ABRE EL EDITOR DE REMITO ---
+  // --- ABRIR EDITOR DE REMITO ---
   Future<void> _abrirEditorRemito(Map<String, dynamic> item) async {
-    // 1. Parseo seguro de fecha
     DateTime fechaParseada;
     try {
       fechaParseada = DateTime.parse(item['fecha']);
     } catch (e) {
-      fechaParseada = DateTime.now(); // Si falla, usa fecha actual
+      fechaParseada = DateTime.now();
     }
 
-    // 2. Reconstruir objeto RemitoModel
     final remitoObj = RemitoModel(
       id: item['id'],
       fecha: fechaParseada,
       obraId: item['obraId'] ?? 'unknown',
       nombreObra: item['obra'] ?? 'Obra Desconocida',
       nroRemito: item['nroRemito'] ?? '',
-      nroGuia: item['nroGuia'] ?? '', // <--- AGREGAR ESTA LÍNEA
-      proveedor: item['proveedor'] ?? '',
-      patente: item['patente'] ?? '',
-      chofer: item['chofer'] ?? '',
+      nroGuia: item['nroGuia'] ?? '',
+      procedencia: item['procedencia'] ?? '',
+      destino: item['destino'] ?? '',
       material: item['material'] ?? '',
       cantidad: item['cantidad'] ?? '',
+      horaDescarga: item['horaDescarga'] ?? '',
+      recibidor: item['recibidor'] ?? '',
+      empresaTransportista: item['empresaTransportista'] ?? '',
+      patenteCamion: item['patenteCamion'] ?? '',
+      patenteAcoplado: item['patenteAcoplado'] ?? '',
+      chofer: item['chofer'] ?? '',
+      observaciones: item['observaciones'] ?? '',
       fotoRuta: item['fotoRuta'] ?? '',
     );
 
-    // 3. Crear Obra temporal para pasar al formulario
     final obraObj = ObraModel(
       id: item['obraId'] ?? 'unknown',
       nombre: item['obra'] ?? 'Obra Desconocida',
       direccion: '',
     );
 
-    // 4. Navegar a la pantalla de edición
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => RemitoFormScreen(
           obra: obraObj,
-          remitoExistente: remitoObj, // <--- Esto activa el modo edición
+          remitoExistente: remitoObj,
         ),
       ),
     );
 
-    // 5. Recargar la pantalla al volver
     setState(() {});
   }
-
 
   // --- PESTAÑA 2: INFORMES ---
   Widget _buildInformesList() {
@@ -190,7 +186,7 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
     );
   }
 
-  // --- FUNCIÓN QUE ABRE EL EDITOR DE INFORME ---
+  // --- ABRIR EDITOR DE INFORME ---
   Future<void> _abrirEditorInforme(Map<String, dynamic> item) async {
     DateTime fechaParseada;
     try {
