@@ -2,30 +2,27 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+/// Servicio encargado de las notificaciones locales y recordatorios diarios.
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notifications = 
+  static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  // Inicializar
+  /// Inicializa el servicio de notificaciones.
   static Future<void> init() async {
     tz.initializeTimeZones();
 
-    const AndroidInitializationSettings androidSettings = 
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings iosSettings = 
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
-
-    const InitializationSettings settings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const ios = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
     );
 
-    // CORRECCIÓN 1: El error pedía el parámetro 'settings', no 'initializationSettings'
+    const settings = InitializationSettings(
+      android: android,
+      iOS: ios,
+    );
+
     await _notifications.initialize(settings: settings);
   }
 

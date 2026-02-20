@@ -1,6 +1,7 @@
+/// Modelo que representa a un usuario del sistema (Admin u Operario).
 class UserModel {
   final String username;
-  final String password; // En producción esto debería estar encriptado
+  final String password; // Nota: En producción esto debería estar encriptado.
   final String role; // 'admin' o 'operario'
 
   UserModel({

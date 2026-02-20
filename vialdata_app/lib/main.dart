@@ -3,17 +3,18 @@ import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/config_service.dart';
+import 'utils/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicializamos los servicios antes de arrancar la app
   await AuthService.init();
   await NotificationService.init();
   await ConfigService.init();
-  
+
   // Programamos la alarma diaria (versión inexacta para API 34)
-  await NotificationService.scheduleDailyReportReminder(); 
+  await NotificationService.scheduleDailyReportReminder();
 
   runApp(const VialDataApp());
 }
@@ -27,12 +28,12 @@ class VialDataApp extends StatelessWidget {
       title: 'VialData',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue.shade900),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryBlue),
         useMaterial3: true,
         inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.backgroundLight,
         ),
       ),
       home: const LoginScreen(),
