@@ -31,8 +31,8 @@ class NotificationService {
     await _notifications.cancelAll();
 
     // Horario: 16:30
-    final int hour = 16;
-    final int minute = 30;
+    const int hour = 16;
+    const int minute = 30;
 
     // CORRECCIÓN 2: Eliminamos 'uiLocalNotificationDateInterpretation' que daba error
     await _notifications.zonedSchedule(

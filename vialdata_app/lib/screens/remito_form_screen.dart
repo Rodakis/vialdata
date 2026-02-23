@@ -225,6 +225,16 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Logo en la cabecera
+              Center(
+                child: Image.asset(
+                  'assets/logo.jpg',
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 10),
+
               // 1. Identificación
               _buildSectionTitle('1. Identificación'),
               Row(
@@ -256,7 +266,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               // 2. Origen y Destino
               _buildSectionTitle('2. Origen y Destino'),
               DropdownButtonFormField<String>(
-                value: _selectedProcedencia,
+                initialValue: _selectedProcedencia,
                 decoration: AppStyles.inputDecoration(label: 'Procedencia'),
                 items: ConfigService.origenes.isEmpty
                     ? [
@@ -290,7 +300,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedMaterial,
+                      initialValue: _selectedMaterial,
                       decoration: AppStyles.inputDecoration(label: 'Material'),
                       items: ConfigService.materiales.isEmpty
                           ? [
@@ -341,7 +351,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedRecibidor,
+                      initialValue: _selectedRecibidor,
                       decoration: AppStyles.inputDecoration(label: 'Recibidor'),
                       items: ConfigService.recibidores.isEmpty
                           ? [
@@ -369,7 +379,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               // 4. Transporte (Opcional)
               _buildSectionTitle('4. Transporte (Opcional)'),
               DropdownButtonFormField<String>(
-                value: _selectedEmpresa,
+                initialValue: _selectedEmpresa,
                 decoration:
                     AppStyles.inputDecoration(label: 'Empresa Transportista'),
                 items: ConfigService.transportistas.isEmpty

@@ -3,10 +3,10 @@ import '../models/obra_model.dart';
 import '../services/storage_service.dart';
 
 class AdminObrasScreen extends StatefulWidget {
-  const AdminObrasScreen({Key? key}) : super(key: key);
+  const AdminObrasScreen({super.key});
 
   @override
-  _AdminObrasScreenState createState() => _AdminObrasScreenState();
+  State<AdminObrasScreen> createState() => _AdminObrasScreenState();
 }
 
 class _AdminObrasScreenState extends State<AdminObrasScreen> {
@@ -61,12 +61,20 @@ class _AdminObrasScreenState extends State<AdminObrasScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: _nombreController, decoration: const InputDecoration(labelText: 'Nombre de la Obra')),
-            TextField(controller: _direccionController, decoration: const InputDecoration(labelText: 'Dirección / Ubicación')),
+            TextField(
+                controller: _nombreController,
+                decoration:
+                    const InputDecoration(labelText: 'Nombre de la Obra')),
+            TextField(
+                controller: _direccionController,
+                decoration:
+                    const InputDecoration(labelText: 'Dirección / Ubicación')),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
           ElevatedButton(onPressed: _agregarObra, child: const Text('Guardar')),
         ],
       ),
@@ -82,7 +90,8 @@ class _AdminObrasScreenState extends State<AdminObrasScreen> {
         child: const Icon(Icons.add),
       ),
       body: _obras.isEmpty
-          ? const Center(child: Text('No hay obras registradas. Agrega una (+).'))
+          ? const Center(
+              child: Text('No hay obras registradas. Agrega una (+).'))
           : ListView.builder(
               itemCount: _obras.length,
               itemBuilder: (ctx, i) {
@@ -91,7 +100,8 @@ class _AdminObrasScreenState extends State<AdminObrasScreen> {
                   margin: const EdgeInsets.all(8),
                   child: ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.business)),
-                    title: Text(obra.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(obra.nombre,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(obra.direccion),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),

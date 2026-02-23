@@ -3,33 +3,31 @@ import '../services/auth_service.dart';
 import '../models/user_model.dart';
 
 class AdminUsersScreen extends StatefulWidget {
-  const AdminUsersScreen({Key? key}) : super(key: key);
+  const AdminUsersScreen({super.key});
 
   @override
-  _AdminUsersScreenState createState() => _AdminUsersScreenState();
+  State<AdminUsersScreen> createState() => _AdminUsersScreenState();
 }
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final _userController = TextEditingController();
   final _passController = TextEditingController();
   String _selectedRole = 'operario';
-  
-  // Para forzar refresco de la lista
-  bool _isLoading = false;
 
   void _createUser() async {
     if (_userController.text.isEmpty || _passController.text.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Complete todos los campos')));
       return;
     }
 
-    setState(() => _isLoading = true);
     bool success = await AuthService.createUser(
       _userController.text.trim(),
       _passController.text.trim(),
       _selectedRole
     );
-    setState(() => _isLoading = false);
+
+    if (!mounted) return;
 
     if (success) {
       _userController.clear();
@@ -43,11 +41,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   void _deleteUser(String username) async {
     if (username == 'admin') {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No puedes borrar al Admin principal')));
       return;
     }
     
     await AuthService.deleteUser(username);
+    if (!mounted) return;
     setState(() {}); // Refrescar lista
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario eliminado')));
   }
@@ -82,7 +82,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedRole,
+                            initialValue: _selectedRole,
                             decoration: const InputDecoration(labelText: 'Rol', contentPadding: EdgeInsets.symmetric(horizontal: 10)),
                             items: const [
                               DropdownMenuItem(value: 'operario', child: Text('Operario')),
@@ -128,9 +128,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         child: Icon(user.role == 'admin' ? Icons.admin_panel_settings : Icons.person, color: Colors.white),
                       ),
                       title: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('Rol: ${user.role}  |  Clave: ${user.password}'), // Mostramos clave para que el admin la recuerde
+                      subtitle: Text('Rol: ${user.role}  |  Clave: ${user.password}'), 
                       trailing: user.username == 'admin' 
-                        ? null // No mostrar botón de borrar para el admin principal
+                        ? null 
                         : IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _deleteUser(user.username),

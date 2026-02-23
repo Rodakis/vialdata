@@ -45,12 +45,12 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
     if (widget.informeExistente != null) {
       final inf = widget.informeExistente!;
       _fecha = inf.fecha;
-      _horasController.text = inf.horasMaquina ?? '';
-      _kmController.text = inf.kmRecorridos ?? '';
-      _actividades = inf.actividades ?? '';
-      _avance = inf.avanceDescripcion ?? '';
-      _personal = inf.personal ?? '';
-      _equipos = inf.equipos ?? '';
+      _horasController.text = inf.horasMaquina;
+      _kmController.text = inf.kmRecorridos;
+      _actividades = inf.actividades;
+      _avance = inf.avanceDescripcion;
+      _personal = inf.personal;
+      _equipos = inf.equipos;
       _incidencias = inf.incidencias ?? '';
       _comentarios = inf.comentariosAdicionales ?? '';
       _fotosRutas = List.from(inf.fotosRutas);
@@ -130,6 +130,15 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Logo en la cabecera
+              Center(
+                child: Image.asset(
+                  'assets/logo.jpg',
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 10),
               Card(
                 color: AppColors.contentOrangeLight,
                 child: Padding(

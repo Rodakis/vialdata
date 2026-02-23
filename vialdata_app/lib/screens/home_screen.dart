@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
 
               DropdownButtonFormField<ObraModel>(
-                value: selectedObra,
+                initialValue: selectedObra,
                 decoration: AppStyles.inputDecoration(
                   label: '',
                   prefixIcon: Icons.business,

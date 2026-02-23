@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
+import '../services/pdf_service.dart';
 import '../models/informe_diario_model.dart';
 import '../models/obra_model.dart';
 import '../models/remito_model.dart';
@@ -13,7 +14,8 @@ class HistoryScreen extends StatefulWidget {
   _HistoryScreenState createState() => _HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProviderStateMixin {
+class _HistoryScreenState extends State<HistoryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -55,18 +57,20 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: StorageService.getRemitos(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.isEmpty) return _emptyState('No hay remitos guardados');
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.isEmpty)
+          return _emptyState('No hay remitos guardados');
 
         return ListView.builder(
           itemCount: snapshot.data!.length,
           itemBuilder: (context, index) {
             final item = snapshot.data![index];
-            
+
             final material = item['material'] ?? '---';
             final cantidad = item['cantidad'] ?? '---';
             final obra = item['obra'] ?? 'Sin Obra';
-            
+
             String fechaTexto = '---';
             if (item['fecha'] != null) {
               try {
@@ -76,14 +80,48 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
               }
             }
 
+            final remitoObj = RemitoModel(
+              id: item['id'] ?? '',
+              fecha: item['fecha'] != null
+                  ? DateTime.parse(item['fecha'])
+                  : DateTime.now(),
+              obraId: item['obraId'] ?? 'unknown',
+              nombreObra: item['obra'] ?? 'Obra Desconocida',
+              nroRemito: item['nroRemito'] ?? '',
+              nroGuia: item['nroGuia'] ?? '',
+              procedencia: item['procedencia'] ?? '',
+              destino: item['destino'] ?? '',
+              material: item['material'] ?? '',
+              cantidad: item['cantidad'] ?? '',
+              horaDescarga: item['horaDescarga'] ?? '',
+              recibidor: item['recibidor'] ?? '',
+              empresaTransportista: item['empresaTransportista'] ?? '',
+              patenteCamion: item['patenteCamion'] ?? '',
+              patenteAcoplado: item['patenteAcoplado'] ?? '',
+              chofer: item['chofer'] ?? '',
+              observaciones: item['observaciones'] ?? '',
+              fotoRuta: item['fotoRuta'] ?? '',
+            );
+
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: ListTile(
                 leading: const Icon(Icons.description, color: Colors.blue),
                 title: Text('$material - $cantidad'),
-                subtitle: Text('Obra: $obra\nFecha: $fechaTexto\nTap para editar...'),
+                subtitle:
+                    Text('Obra: $obra\nFecha: $fechaTexto\nTap para editar...'),
                 isThreeLine: true,
-                trailing: const Icon(Icons.edit, color: Colors.grey),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.share, color: Colors.blue),
+                      onPressed: () =>
+                          PdfService.generateAndShareRemito(remitoObj),
+                    ),
+                    const Icon(Icons.edit, color: Colors.grey),
+                  ],
+                ),
                 onTap: () async {
                   await _abrirEditorRemito(item);
                 },
@@ -149,17 +187,19 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: StorageService.getInformes(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.isEmpty) return _emptyState('No hay informes diarios');
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.isEmpty)
+          return _emptyState('No hay informes diarios');
 
         return ListView.builder(
           itemCount: snapshot.data!.length,
           itemBuilder: (context, index) {
             final item = snapshot.data![index];
-            
+
             final titulo = item['obra'] ?? 'Obra sin nombre';
             String fechaTexto = '---';
-             if (item['fecha'] != null) {
+            if (item['fecha'] != null) {
               try {
                 fechaTexto = item['fecha'].toString().split('T')[0];
               } catch (e) {
@@ -167,14 +207,44 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
               }
             }
 
+            final informeObj = InformeDiarioModel(
+              id: item['id'] ?? '',
+              fecha: item['fecha'] != null
+                  ? DateTime.parse(item['fecha'])
+                  : DateTime.now(),
+              obraId: item['obraId'] ?? '',
+              nombreObra: item['obra'] ?? '',
+              horasMaquina: item['horasMaquina'] ?? '',
+              kmRecorridos: item['kmRecorridos'] ?? '',
+              actividades: item['actividades'] ?? '',
+              avanceDescripcion: item['avanceDescripcion'] ?? '',
+              personal: item['personal'] ?? '',
+              equipos: item['equipos'] ?? '',
+              incidencias: item['incidencias'] ?? '',
+              comentariosAdicionales: item['observaciones'] ?? '',
+              fotosRutas: List<String>.from(item['fotosRutas'] ?? []),
+            );
+
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: ListTile(
-                leading: const Icon(Icons.assignment_turned_in, color: Colors.orange),
-                title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+                leading: const Icon(Icons.assignment_turned_in,
+                    color: Colors.orange),
+                title: Text(titulo,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text('Fecha: $fechaTexto\nTap para editar...'),
                 isThreeLine: true,
-                trailing: const Icon(Icons.edit, color: Colors.grey),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.share, color: Colors.orange),
+                      onPressed: () =>
+                          PdfService.generateAndShareInforme(informeObj),
+                    ),
+                    const Icon(Icons.edit, color: Colors.grey),
+                  ],
+                ),
                 onTap: () async {
                   await _abrirEditorInforme(item);
                 },
@@ -207,7 +277,7 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
       personal: item['personal'] ?? '',
       equipos: item['equipos'] ?? '',
       incidencias: item['incidencias'] ?? '',
-      comentariosAdicionales: item['observaciones'] ?? '', 
+      comentariosAdicionales: item['observaciones'] ?? '',
       fotosRutas: List<String>.from(item['fotosRutas'] ?? []),
     );
 
