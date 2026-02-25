@@ -17,4 +17,11 @@ class AppColors {
   static const Color greyLight = Color(0xFFEEEEEE);
   static const Color blueGrey = Colors.blueGrey;
   static const Color blueGreyDark = Color(0xFF263238); // blueGrey.shade900
+
+  // Nuevos colores para Informe Diario (Corporate Dark + Beige Pastel)
+  static const Color corporateDark = Color(0xFF1A1A1B);
+  static const Color corporateCard = Color(0xFF2D2D2E);
+  static const Color beigePastel = Color(0xFFF5F5DC);
+  static const Color beigePastelDark = Color(0xFFD2B48C);
+  static const Color beigePastelLight = Color(0xFFFFFDF0);
 }

@@ -8,6 +8,7 @@ class StorageService {
   static const String _keyInformes = 'vialdata_informes';
   static const String _keyObras = 'vialdata_obras';
   static const String _keyContadorRemito = 'vialdata_contador_remito';
+  static const String _keyContadorInforme = 'vialdata_contador_informe';
 
   // --- GESTIÓN DE REMITOS ---
 
@@ -96,6 +97,23 @@ class StorageService {
     await prefs.setInt(_keyContadorRemito, ultimo + 1);
   }
 
+  // --- CONTADOR DE INFORMES ---
+
+  /// Obtiene el siguiente número de informe formateado (p. ej., "#00005").
+  static Future<String> getProximoNroInforme() async {
+    final prefs = await SharedPreferences.getInstance();
+    int ultimo = prefs.getInt(_keyContadorInforme) ?? 0;
+    int proximo = ultimo + 1;
+    return '#${proximo.toString().padLeft(5, '0')}';
+  }
+
+  /// Incrementa el contador global de informes.
+  static Future<void> incrementarContadorInforme() async {
+    final prefs = await SharedPreferences.getInstance();
+    int ultimo = prefs.getInt(_keyContadorInforme) ?? 0;
+    await prefs.setInt(_keyContadorInforme, ultimo + 1);
+  }
+
   // --- GESTIÓN DE OBRAS ---
 
   /// Guarda la lista completa de obras.
@@ -120,5 +138,6 @@ class StorageService {
     await prefs.remove(_keyInformes);
     await prefs.remove(_keyObras);
     await prefs.remove(_keyContadorRemito);
+    await prefs.remove(_keyContadorInforme);
   }
 }

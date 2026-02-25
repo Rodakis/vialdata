@@ -8,10 +8,10 @@ import 'informe_diario_form_screen.dart';
 import 'remito_form_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key}) : super(key: key);
+  const HistoryScreen({super.key});
 
   @override
-  _HistoryScreenState createState() => _HistoryScreenState();
+  State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
 class _HistoryScreenState extends State<HistoryScreen>
@@ -57,10 +57,12 @@ class _HistoryScreenState extends State<HistoryScreen>
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: StorageService.getRemitos(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.isEmpty)
+        }
+        if (snapshot.data!.isEmpty) {
           return _emptyState('No hay remitos guardados');
+        }
 
         return ListView.builder(
           itemCount: snapshot.data!.length,
@@ -187,10 +189,12 @@ class _HistoryScreenState extends State<HistoryScreen>
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: StorageService.getInformes(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.isEmpty)
+        }
+        if (snapshot.data!.isEmpty) {
           return _emptyState('No hay informes diarios');
+        }
 
         return ListView.builder(
           itemCount: snapshot.data!.length,
@@ -207,23 +211,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               }
             }
 
-            final informeObj = InformeDiarioModel(
-              id: item['id'] ?? '',
-              fecha: item['fecha'] != null
-                  ? DateTime.parse(item['fecha'])
-                  : DateTime.now(),
-              obraId: item['obraId'] ?? '',
-              nombreObra: item['obra'] ?? '',
-              horasMaquina: item['horasMaquina'] ?? '',
-              kmRecorridos: item['kmRecorridos'] ?? '',
-              actividades: item['actividades'] ?? '',
-              avanceDescripcion: item['avanceDescripcion'] ?? '',
-              personal: item['personal'] ?? '',
-              equipos: item['equipos'] ?? '',
-              incidencias: item['incidencias'] ?? '',
-              comentariosAdicionales: item['observaciones'] ?? '',
-              fotosRutas: List<String>.from(item['fotosRutas'] ?? []),
-            );
+            final informeObj = InformeDiarioModel.fromJson(item);
 
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -258,28 +246,7 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   // --- ABRIR EDITOR DE INFORME ---
   Future<void> _abrirEditorInforme(Map<String, dynamic> item) async {
-    DateTime fechaParseada;
-    try {
-      fechaParseada = DateTime.parse(item['fecha']);
-    } catch (e) {
-      fechaParseada = DateTime.now();
-    }
-
-    final informeObj = InformeDiarioModel(
-      id: item['id'],
-      fecha: fechaParseada,
-      obraId: item['obraId'] ?? '',
-      nombreObra: item['obra'] ?? '',
-      horasMaquina: item['horasMaquina'] ?? '',
-      kmRecorridos: item['kmRecorridos'] ?? '',
-      actividades: item['actividades'] ?? '',
-      avanceDescripcion: item['avanceDescripcion'] ?? '',
-      personal: item['personal'] ?? '',
-      equipos: item['equipos'] ?? '',
-      incidencias: item['incidencias'] ?? '',
-      comentariosAdicionales: item['observaciones'] ?? '',
-      fotosRutas: List<String>.from(item['fotosRutas'] ?? []),
-    );
+    final informeObj = InformeDiarioModel.fromJson(item);
 
     final obraObj = ObraModel(
       id: item['obraId'] ?? 'unknown',

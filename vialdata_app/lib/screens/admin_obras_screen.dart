@@ -43,7 +43,7 @@ class _AdminObrasScreenState extends State<AdminObrasScreen> {
     await StorageService.saveObras(_obras);
     _nombreController.clear();
     _direccionController.clear();
-    Navigator.pop(context); // Cerrar el diálogo
+    if (mounted) Navigator.pop(context); // Cerrar el diálogo
   }
 
   void _borrarObra(String id) async {

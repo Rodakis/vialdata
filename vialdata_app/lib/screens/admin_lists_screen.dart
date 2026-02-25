@@ -35,8 +35,10 @@ class _AdminListsScreenState extends State<AdminListsScreen> {
           _currentListType, _itemController.text.trim());
       _itemController.clear();
       setState(() {}); // Refrescar UI
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Elemento agregado')));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Elemento agregado')));
+      }
     }
   }
 
