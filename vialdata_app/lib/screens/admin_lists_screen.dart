@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/config_service.dart';
+import '../services/storage_service.dart';
 
 class AdminListsScreen extends StatefulWidget {
   const AdminListsScreen({super.key});
@@ -9,32 +9,64 @@ class AdminListsScreen extends StatefulWidget {
 }
 
 class _AdminListsScreenState extends State<AdminListsScreen> {
-  // Controlamos qué lista estamos editando
-  String _currentListType = 'materiales';
+  String _currentListType = 'origenes';
   final TextEditingController _itemController = TextEditingController();
+  List<String> _items = [];
+  bool _isLoading = true;
 
-  // Obtener la lista actual según la selección
-  List<String> get _currentList {
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    List<String> list;
     switch (_currentListType) {
-      case 'materiales':
-        return ConfigService.materiales;
       case 'origenes':
-        return ConfigService.origenes;
+        list = await StorageService.getListaOrigenes();
+        break;
       case 'transportistas':
-        return ConfigService.transportistas;
+        list = await StorageService.getListaTransportistas();
+        break;
       case 'recibidores':
-        return ConfigService.recibidores;
+        list = await StorageService.getListaRecibidores();
+        break;
+      case 'materiales':
+        list = await StorageService.getListaMateriales();
+        break;
       default:
-        return [];
+        list = [];
     }
+    setState(() {
+      _items = list;
+      _isLoading = false;
+    });
   }
 
   void _addItem() async {
-    if (_itemController.text.isNotEmpty) {
-      await ConfigService.addItem(
-          _currentListType, _itemController.text.trim());
+    if (_itemController.text.trim().isNotEmpty) {
+      final newItem = _itemController.text.trim();
+      final newList = List<String>.from(_items)..add(newItem);
+
+      switch (_currentListType) {
+        case 'origenes':
+          await StorageService.saveListaOrigenes(newList);
+          break;
+        case 'transportistas':
+          await StorageService.saveListaTransportistas(newList);
+          break;
+        case 'recibidores':
+          await StorageService.saveListaRecibidores(newList);
+          break;
+        case 'materiales':
+          await StorageService.saveListaMateriales(newList);
+          break;
+      }
+
       _itemController.clear();
-      setState(() {}); // Refrescar UI
+      _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Elemento agregado')));
@@ -43,8 +75,22 @@ class _AdminListsScreenState extends State<AdminListsScreen> {
   }
 
   void _deleteItem(String item) async {
-    await ConfigService.removeItem(_currentListType, item);
-    setState(() {}); // Refrescar UI
+    final newList = List<String>.from(_items)..remove(item);
+    switch (_currentListType) {
+      case 'origenes':
+        await StorageService.saveListaOrigenes(newList);
+        break;
+      case 'transportistas':
+        await StorageService.saveListaTransportistas(newList);
+        break;
+      case 'recibidores':
+        await StorageService.saveListaRecibidores(newList);
+        break;
+      case 'materiales':
+        await StorageService.saveListaMateriales(newList);
+        break;
+    }
+    _loadData();
   }
 
   @override
@@ -85,6 +131,7 @@ class _AdminListsScreenState extends State<AdminListsScreen> {
                 setState(() {
                   _currentListType = val!;
                 });
+                _loadData();
               },
             ),
           ),
@@ -116,21 +163,23 @@ class _AdminListsScreenState extends State<AdminListsScreen> {
 
           // LISTADO DE ELEMENTOS EXISTENTES
           Expanded(
-            child: ListView.builder(
-              itemCount: _currentList.length,
-              itemBuilder: (context, index) {
-                final item = _currentList[index];
-                return ListTile(
-                  title: Text(item),
-                  leading:
-                      const Icon(Icons.label_important, color: Colors.grey),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteItem(item),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _items.length,
+                    itemBuilder: (context, index) {
+                      final item = _items[index];
+                      return ListTile(
+                        title: Text(item),
+                        leading: const Icon(Icons.label_important,
+                            color: Colors.grey),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteItem(item),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

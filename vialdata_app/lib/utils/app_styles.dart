@@ -34,16 +34,30 @@ class AppStyles {
     required String label,
     IconData? prefixIcon,
     String? helperText,
+    String? hintText,
     bool filled = true,
     Color? fillColor = Colors.white,
+    TextStyle? labelStyle,
+    TextStyle? hintStyle,
+    TextStyle? floatingLabelStyle,
+    InputBorder? border,
+    InputBorder? enabledBorder,
+    InputBorder? focusedBorder,
   }) {
     return InputDecoration(
       labelText: label,
+      labelStyle: labelStyle,
+      floatingLabelStyle: floatingLabelStyle,
       helperText: helperText,
+      hintText: hintText,
+      hintStyle: hintStyle,
       prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-      border: const OutlineInputBorder(),
+      border: border ?? const OutlineInputBorder(),
+      enabledBorder: enabledBorder,
+      focusedBorder: focusedBorder,
       filled: filled,
       fillColor: fillColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
     );
   }
 

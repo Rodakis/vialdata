@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/obra_model.dart';
 import '../models/remito_model.dart';
-import '../services/config_service.dart';
 import '../services/storage_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_styles.dart';
@@ -44,47 +43,69 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
   String? _fotoRuta;
   final ImagePicker _picker = ImagePicker();
 
+  // Listas Dinámicas
+  List<String> _listaOrigenes = [];
+  List<String> _listaMateriales = [];
+  List<String> _listaRecibidores = [];
+  List<String> _listaTransportistas = [];
+
   // Valores seleccionados para Dropdowns
   String? _selectedProcedencia;
   String? _selectedMaterial;
   String? _selectedRecibidor;
   String? _selectedEmpresa;
 
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    _listaOrigenes = await StorageService.getListaOrigenes();
+    _listaMateriales = await StorageService.getListaMateriales();
+    _listaRecibidores = await StorageService.getListaRecibidores();
+    _listaTransportistas = await StorageService.getListaTransportistas();
+
     if (widget.remitoExistente != null) {
       final r = widget.remitoExistente!;
       _fecha = r.fecha;
       _nroRemitoController.text = r.nroRemito;
       _nroGuiaController.text = r.nroGuia;
 
-      // Inicializar dropdowns con valores del servicio
-      if (ConfigService.origenes.contains(r.procedencia)) {
+      if (_listaOrigenes.contains(r.procedencia)) {
         _selectedProcedencia = r.procedencia;
+      } else {
+        _selectedProcedencia = 'Otro';
       }
       _procedenciaController.text = r.procedencia;
 
-      if (ConfigService.materiales.contains(r.material)) {
+      if (_listaMateriales.contains(r.material)) {
         _selectedMaterial = r.material;
+      } else {
+        _selectedMaterial = 'Otro';
       }
       _materialController.text = r.material;
 
-      if (ConfigService.recibidores.contains(r.recibidor)) {
+      if (_listaRecibidores.contains(r.recibidor)) {
         _selectedRecibidor = r.recibidor;
+      } else {
+        _selectedRecibidor = 'Otro';
       }
       _recibidorController.text = r.recibidor;
 
-      if (ConfigService.transportistas.contains(r.empresaTransportista)) {
+      if (_listaTransportistas.contains(r.empresaTransportista)) {
         _selectedEmpresa = r.empresaTransportista;
+      } else {
+        _selectedEmpresa = 'Otro';
       }
       _empresaController.text = r.empresaTransportista;
 
       _choferController.text = r.chofer;
-
       _patenteCamionController.text = r.patenteCamion;
       _patenteAcopladoController.text = r.patenteAcoplado;
-
       _destinoController.text = r.destino;
       _cantidadController.text = r.cantidad;
       _horaDescargaController.text = r.horaDescarga;
@@ -95,6 +116,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       _cargarNumeroAutomatico();
       _destinoController.text = widget.obra.nombre;
     }
+    setState(() => _isLoading = false);
   }
 
   /// Carga el siguiente número de remito de forma automática.
@@ -198,7 +220,13 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
+      backgroundColor: AppColors.corporateDark,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,8 +238,8 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                     fontSize: 14, fontWeight: FontWeight.normal)),
           ],
         ),
-        backgroundColor: AppColors.backgroundLight,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.beigePastel,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -251,6 +279,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                     child: CustomTextField(
                       controller: _nroGuiaController,
                       label: 'Nº Guía *',
+                      style: const TextStyle(color: Colors.white),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      hintText: 'Ej: 001-0001',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      fillColor: AppColors.corporateDark,
                       validator: (v) =>
                           (v == null || v.isEmpty) ? 'Requerido' : null,
                     ),
@@ -266,32 +299,47 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               // 2. Origen y Destino
               _buildSectionTitle('2. Origen y Destino'),
               DropdownButtonFormField<String>(
-                initialValue: _selectedProcedencia,
-                decoration: AppStyles.inputDecoration(label: 'Procedencia'),
-                items: ConfigService.origenes.isEmpty
-                    ? [
-                        const DropdownMenuItem(
-                            value: null,
-                            child: Text('No hay datos disponibles'))
-                      ]
-                    : ConfigService.origenes
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
+                value: _selectedProcedencia,
+                dropdownColor: AppColors.corporateCard,
+                style: const TextStyle(color: Colors.white),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Procedencia',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  hintText: 'Seleccione origen',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  fillColor: AppColors.corporateDark,
+                ),
+                items: [..._listaOrigenes, 'Otro']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 onChanged: (v) {
-                  if (v != null) {
-                    setState(() {
-                      _selectedProcedencia = v;
-                      _procedenciaController.text = v;
-                    });
-                  }
+                  setState(() {
+                    _selectedProcedencia = v;
+                    if (v != 'Otro') _procedenciaController.text = v ?? '';
+                  });
                 },
                 validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
               ),
+              if (_selectedProcedencia == 'Otro') ...[
+                const SizedBox(height: 15),
+                CustomTextField(
+                  controller: _procedenciaController,
+                  label: 'Procedencia (Manual)',
+                  style: const TextStyle(color: Colors.white),
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  hintText: 'Ej: Cantera B',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  fillColor: AppColors.corporateDark,
+                ),
+              ],
               const SizedBox(height: 15),
               CustomTextField(
                 controller: _destinoController,
                 label: 'Destino',
                 helperText: 'Editable si es necesario',
+                style: const TextStyle(color: Colors.white),
+                labelStyle: const TextStyle(color: Colors.white70),
+                fillColor: AppColors.corporateDark,
               ),
 
               // 3. Datos de Carga
@@ -299,29 +347,44 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedMaterial,
-                      decoration: AppStyles.inputDecoration(label: 'Material'),
-                      items: ConfigService.materiales.isEmpty
-                          ? [
-                              const DropdownMenuItem(
-                                  value: null,
-                                  child: Text('No hay datos disponibles'))
-                            ]
-                          : ConfigService.materiales
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _selectedMaterial,
+                          dropdownColor: AppColors.corporateCard,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: AppStyles.inputDecoration(
+                            label: 'Material',
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            hintText: 'Seleccione material',
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            fillColor: AppColors.corporateDark,
+                          ),
+                          items: [..._listaMateriales, 'Otro']
                               .map((e) =>
                                   DropdownMenuItem(value: e, child: Text(e)))
                               .toList(),
-                      onChanged: (v) {
-                        if (v != null) {
-                          setState(() {
-                            _selectedMaterial = v;
-                            _materialController.text = v;
-                          });
-                        }
-                      },
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Requerido' : null,
+                          onChanged: (v) {
+                            setState(() {
+                              _selectedMaterial = v;
+                              if (v != 'Otro')
+                                _materialController.text = v ?? '';
+                            });
+                          },
+                          validator: (v) =>
+                              (v == null || v.isEmpty) ? 'Requerido' : null,
+                        ),
+                        if (_selectedMaterial == 'Otro') ...[
+                          const SizedBox(height: 15),
+                          CustomTextField(
+                            controller: _materialController,
+                            label: 'Material (Manual)',
+                            style: const TextStyle(color: Colors.white),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            fillColor: AppColors.corporateDark,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   const SizedBox(width: 15),
@@ -330,6 +393,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                       controller: _cantidadController,
                       label: 'Cantidad (...)',
                       keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      hintText: 'Ej: 15.5',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      fillColor: AppColors.corporateDark,
                       validator: (v) =>
                           (v == null || v.isEmpty) ? 'Requerido' : null,
                     ),
@@ -346,31 +414,49 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                       readOnly: true,
                       onTap: _seleccionarHora,
                       prefixIcon: Icons.access_time_outlined,
+                      style: const TextStyle(color: Colors.white),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      fillColor: AppColors.corporateDark,
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedRecibidor,
-                      decoration: AppStyles.inputDecoration(label: 'Recibidor'),
-                      items: ConfigService.recibidores.isEmpty
-                          ? [
-                              const DropdownMenuItem(
-                                  value: null,
-                                  child: Text('No hay datos disponibles'))
-                            ]
-                          : ConfigService.recibidores
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _selectedRecibidor,
+                          dropdownColor: AppColors.corporateCard,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: AppStyles.inputDecoration(
+                            label: 'Recibidor',
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            hintText: 'Seleccione recibidor',
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            fillColor: AppColors.corporateDark,
+                          ),
+                          items: [..._listaRecibidores, 'Otro']
                               .map((e) =>
                                   DropdownMenuItem(value: e, child: Text(e)))
                               .toList(),
-                      onChanged: (v) {
-                        if (v != null) {
-                          setState(() {
-                            _selectedRecibidor = v;
-                            _recibidorController.text = v;
-                          });
-                        }
-                      },
+                          onChanged: (v) {
+                            setState(() {
+                              _selectedRecibidor = v;
+                              if (v != 'Otro')
+                                _recibidorController.text = v ?? '';
+                            });
+                          },
+                        ),
+                        if (_selectedRecibidor == 'Otro') ...[
+                          const SizedBox(height: 15),
+                          CustomTextField(
+                            controller: _recibidorController,
+                            label: 'Recibidor (Manual)',
+                            style: const TextStyle(color: Colors.white),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            fillColor: AppColors.corporateDark,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -379,27 +465,36 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               // 4. Transporte (Opcional)
               _buildSectionTitle('4. Transporte (Opcional)'),
               DropdownButtonFormField<String>(
-                initialValue: _selectedEmpresa,
-                decoration:
-                    AppStyles.inputDecoration(label: 'Empresa Transportista'),
-                items: ConfigService.transportistas.isEmpty
-                    ? [
-                        const DropdownMenuItem(
-                            value: null,
-                            child: Text('No hay datos disponibles'))
-                      ]
-                    : ConfigService.transportistas
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
+                value: _selectedEmpresa,
+                dropdownColor: AppColors.corporateCard,
+                style: const TextStyle(color: Colors.white),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Empresa Transportista',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  hintText: 'Seleccione transporte',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  fillColor: AppColors.corporateDark,
+                ),
+                items: [..._listaTransportistas, 'Otro']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 onChanged: (v) {
-                  if (v != null) {
-                    setState(() {
-                      _selectedEmpresa = v;
-                      _empresaController.text = v;
-                    });
-                  }
+                  setState(() {
+                    _selectedEmpresa = v;
+                    if (v != 'Otro') _empresaController.text = v ?? '';
+                  });
                 },
               ),
+              if (_selectedEmpresa == 'Otro') ...[
+                const SizedBox(height: 15),
+                CustomTextField(
+                  controller: _empresaController,
+                  label: 'Empresa (Manual)',
+                  style: const TextStyle(color: Colors.white),
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  fillColor: AppColors.corporateDark,
+                ),
+              ],
               const SizedBox(height: 15),
               Row(
                 children: [
@@ -407,6 +502,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                     child: CustomTextField(
                       controller: _patenteCamionController,
                       label: 'Patente Cam.',
+                      style: const TextStyle(color: Colors.white),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      hintText: 'ABC 123',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      fillColor: AppColors.corporateDark,
                       inputFormatters: [
                         UpperCaseTextFormatter(),
                       ],
@@ -417,6 +517,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                     child: CustomTextField(
                       controller: _patenteAcopladoController,
                       label: 'Patente Ac.',
+                      style: const TextStyle(color: Colors.white),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      hintText: 'DEF 456',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      fillColor: AppColors.corporateDark,
                       inputFormatters: [
                         UpperCaseTextFormatter(),
                       ],
@@ -428,6 +533,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               CustomTextField(
                 controller: _choferController,
                 label: 'Chofer',
+                style: const TextStyle(color: Colors.white),
+                labelStyle: const TextStyle(color: Colors.white70),
+                hintText: 'Nombre del chofer',
+                hintStyle: const TextStyle(color: Colors.white38),
+                fillColor: AppColors.corporateDark,
               ),
 
               // 5. Fotos y Cierre
@@ -442,13 +552,13 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      border: Border.all(color: Colors.grey.shade300),
+                      color: AppColors.corporateCard,
+                      border: Border.all(color: Colors.white24),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: _fotoRuta == null
-                        ? Icon(Icons.camera_alt,
-                            size: 40, color: Colors.grey.shade400)
+                        ? const Icon(Icons.camera_alt,
+                            size: 40, color: Colors.white38)
                         : ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child:
@@ -462,6 +572,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                 controller: _observacionesController,
                 label: 'Observaciones',
                 maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                labelStyle: const TextStyle(color: Colors.white70),
+                hintText: 'Notas adicionales...',
+                hintStyle: const TextStyle(color: Colors.white38),
+                fillColor: AppColors.corporateDark,
               ),
 
               const SizedBox(height: 30),
@@ -499,16 +614,17 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
           height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
+            border: Border.all(color: Colors.white24),
             borderRadius: BorderRadius.circular(4),
-            color: Colors.white,
+            color: AppColors.corporateDark,
           ),
           alignment: Alignment.centerLeft,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(value, style: const TextStyle(fontSize: 16)),
-              if (icon != null) Icon(icon, color: Colors.black54),
+              Text(value,
+                  style: const TextStyle(fontSize: 16, color: Colors.white)),
+              if (icon != null) Icon(icon, color: Colors.white70),
             ],
           ),
         ),
@@ -517,10 +633,10 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
           top: -1,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            color: Colors.white,
+            color: AppColors.corporateDark,
             child: Text(
               label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ),
         ),

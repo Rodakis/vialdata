@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../screens/admin_users_screen.dart';
 import '../screens/admin_obras_screen.dart';
 import '../screens/admin_lists_screen.dart';
+import '../screens/config_informes_screen.dart';
+import '../screens/admin_materiales_screen.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_styles.dart';
 
@@ -50,14 +52,33 @@ class AdminPanel extends StatelessWidget {
               onObraUpdated();
             },
           ),
-          const SizedBox(height: 10),
           _AdminButton(
             icon: Icons.list,
-            label: 'Gestionar Listas (Materiales/Empresas)',
+            label: 'Gestionar Listas (Varios)',
             color: Colors.red.shade700,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const AdminListsScreen()),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _AdminButton(
+            icon: Icons.inventory,
+            label: 'Gestionar Materiales',
+            color: Colors.blueGrey,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminMaterialesScreen()),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _AdminButton(
+            icon: Icons.settings_applications,
+            label: 'Configurar Informes Diarios',
+            color: const Color(0xFFC62828), // Rojo oscuro/Naranja oscuro
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ConfigInformesScreen()),
             ),
           ),
         ],

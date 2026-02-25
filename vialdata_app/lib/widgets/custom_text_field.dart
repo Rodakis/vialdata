@@ -16,6 +16,13 @@ class CustomTextField extends StatelessWidget {
   final String? initialValue;
   final Function(String?)? onSaved;
   final List<TextInputFormatter>? inputFormatters;
+  final String? hintText;
+  final TextStyle? style;
+  final TextStyle? labelStyle;
+  final TextStyle? hintStyle;
+  final Color? fillColor;
+  final InputBorder? border;
+  final TextCapitalization textCapitalization;
 
   const CustomTextField({
     super.key,
@@ -23,6 +30,12 @@ class CustomTextField extends StatelessWidget {
     required this.label,
     this.prefixIcon,
     this.helperText,
+    this.hintText,
+    this.style,
+    this.labelStyle,
+    this.hintStyle,
+    this.fillColor,
+    this.border,
     this.keyboardType = TextInputType.text,
     this.readOnly = false,
     this.onTap,
@@ -31,6 +44,7 @@ class CustomTextField extends StatelessWidget {
     this.initialValue,
     this.onSaved,
     this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -38,10 +52,16 @@ class CustomTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       initialValue: initialValue,
+      style: style,
       decoration: AppStyles.inputDecoration(
         label: label,
         prefixIcon: prefixIcon,
         helperText: helperText,
+        hintText: hintText,
+        hintStyle: hintStyle,
+        labelStyle: labelStyle,
+        fillColor: fillColor ?? Colors.white,
+        border: border,
       ),
       keyboardType: keyboardType,
       readOnly: readOnly,
@@ -50,6 +70,7 @@ class CustomTextField extends StatelessWidget {
       maxLines: maxLines,
       onSaved: onSaved,
       inputFormatters: inputFormatters,
+      textCapitalization: textCapitalization,
     );
   }
 }

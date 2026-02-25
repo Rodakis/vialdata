@@ -2,7 +2,6 @@ import 'package:flutter/material.dart'; // <--- ESTA ES LA LÍNEA QUE FALTABA
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
-import 'services/config_service.dart';
 import 'utils/app_colors.dart';
 
 void main() async {
@@ -11,7 +10,6 @@ void main() async {
   // Inicializamos los servicios antes de arrancar la app
   await AuthService.init();
   await NotificationService.init();
-  await ConfigService.init();
 
   // Programamos la alarma diaria (versión inexacta para API 34)
   await NotificationService.scheduleDailyReportReminder();

@@ -10,6 +10,16 @@ class StorageService {
   static const String _keyContadorRemito = 'vialdata_contador_remito';
   static const String _keyContadorInforme = 'vialdata_contador_informe';
 
+  // Claves para listas administrables
+  static const String _keyListaMaquinas = 'vialdata_lista_maquinas';
+  static const String _keyListaChoferes = 'vialdata_lista_choferes';
+  static const String _keyListaOtrosEquipos = 'vialdata_lista_otros_equipos';
+  static const String _keyListaPeones = 'vialdata_lista_peones';
+  static const String _keyListaMateriales = 'vialdata_lista_materiales';
+  static const String _keyListaOrigenes = 'vialdata_lista_origenes';
+  static const String _keyListaRecibidores = 'vialdata_lista_recibidores';
+  static const String _keyListaTransportistas = 'vialdata_lista_transportistas';
+
   // --- GESTIÓN DE REMITOS ---
 
   /// Guarda un nuevo remito al inicio de la lista.
@@ -131,6 +141,60 @@ class StorageService {
     return ObraModel.decode(obrasString);
   }
 
+  // --- GESTIÓN DE LISTAS ADMINISTRABLES (Generic Helpers) ---
+
+  static Future<List<String>> _getList(
+      String key, List<String> defaults) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(key) ?? defaults;
+  }
+
+  static Future<void> _saveList(String key, List<String> list) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(key, list);
+  }
+
+  // Métodos específicos
+  static Future<List<String>> getListaMaquinas() =>
+      _getList(_keyListaMaquinas, ['Excavadora 320', 'Motoniveladora 140K']);
+  static Future<void> saveListaMaquinas(List<String> list) =>
+      _saveList(_keyListaMaquinas, list);
+
+  static Future<List<String>> getListaChoferes() =>
+      _getList(_keyListaChoferes, ['Carlos Ruiz', 'Pedro Picaso']);
+  static Future<void> saveListaChoferes(List<String> list) =>
+      _saveList(_keyListaChoferes, list);
+
+  static Future<List<String>> getListaOtrosEquipos() =>
+      _getList(_keyListaOtrosEquipos, ['Generador 20kVA', 'Compresor']);
+  static Future<void> saveListaOtrosEquipos(List<String> list) =>
+      _saveList(_keyListaOtrosEquipos, list);
+
+  static Future<List<String>> getListaPeones() =>
+      _getList(_keyListaPeones, ['Peón 1', 'Peón 2']);
+  static Future<void> saveListaPeones(List<String> list) =>
+      _saveList(_keyListaPeones, list);
+
+  static Future<List<String>> getListaMateriales() =>
+      _getList(_keyListaMateriales, ['Tosca', 'Arena', 'Piedra']);
+  static Future<void> saveListaMateriales(List<String> list) =>
+      _saveList(_keyListaMateriales, list);
+
+  static Future<List<String>> getListaOrigenes() =>
+      _getList(_keyListaOrigenes, ['Cantera A', 'Cantera B', 'Pozo Norte']);
+  static Future<void> saveListaOrigenes(List<String> list) =>
+      _saveList(_keyListaOrigenes, list);
+
+  static Future<List<String>> getListaRecibidores() =>
+      _getList(_keyListaRecibidores, ['Juan Pérez', 'María Gonzalez']);
+  static Future<void> saveListaRecibidores(List<String> list) =>
+      _saveList(_keyListaRecibidores, list);
+
+  static Future<List<String>> getListaTransportistas() =>
+      _getList(_keyListaTransportistas, ['Transporte Gomez', 'Logística Sur']);
+  static Future<void> saveListaTransportistas(List<String> list) =>
+      _saveList(_keyListaTransportistas, list);
+
   /// Borra todos los datos almacenados (útil para pruebas).
   static Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
@@ -139,5 +203,13 @@ class StorageService {
     await prefs.remove(_keyObras);
     await prefs.remove(_keyContadorRemito);
     await prefs.remove(_keyContadorInforme);
+    await prefs.remove(_keyListaMaquinas);
+    await prefs.remove(_keyListaChoferes);
+    await prefs.remove(_keyListaOtrosEquipos);
+    await prefs.remove(_keyListaPeones);
+    await prefs.remove(_keyListaMateriales);
+    await prefs.remove(_keyListaOrigenes);
+    await prefs.remove(_keyListaRecibidores);
+    await prefs.remove(_keyListaTransportistas);
   }
 }

@@ -23,30 +23,12 @@ class InformeDiarioFormScreen extends StatefulWidget {
 class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // --- MOCK DATA PARA DROPDOWNS ---
-  final List<String> _mockMaquinas = [
-    'Excavadora 320',
-    'Motoniveladora 140K',
-    'Pala Cargadora 950',
-    'Rodillo Compactador'
-  ];
-  final List<String> _mockEmpleadosInternos = [
-    'Juan Pérez',
-    'Carlos García',
-    'Luis Rodríguez',
-    'Alberto Sánchez'
-  ];
-  final List<String> _mockMateriales = [
-    'Suelo Seleccionado',
-    'Base Granular',
-    'Asfalto',
-    'Piedra 1-3'
-  ];
-  final List<String> _mockOtrosEquipos = [
-    'Generador 20kVA',
-    'Torre de Iluminación',
-    'Compresor de Aire'
-  ];
+  // --- LISTAS DINÁMICAS ---
+  List<String> _listaMaquinas = [];
+  List<String> _listaChoferes = [];
+  List<String> _listaMateriales = [];
+  List<String> _listaOtrosEquipos = [];
+  List<String> _listaPeones = [];
   final List<String> _mockCapacidadesCamion = [
     '3 m3',
     '7 m3',
@@ -78,6 +60,13 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   }
 
   Future<void> _initData() async {
+    // Cargar listas dinámicas
+    _listaMaquinas = await StorageService.getListaMaquinas();
+    _listaChoferes = await StorageService.getListaChoferes();
+    _listaMateriales = await StorageService.getListaMateriales();
+    _listaOtrosEquipos = await StorageService.getListaOtrosEquipos();
+    _listaPeones = await StorageService.getListaPeones();
+
     if (widget.informeExistente != null) {
       final inf = widget.informeExistente!;
       _fecha = inf.fecha;
@@ -90,12 +79,11 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       _peones = List.from(inf.peonesAyudantes);
       _camiones = List.from(inf.camionesVolcadoras);
       _fotosRutas = List.from(inf.fotosRutas);
-      setState(() => _isLoading = false);
     } else {
       _fecha = DateTime.now();
       _numeroInforme = await StorageService.getProximoNroInforme();
-      setState(() => _isLoading = false);
     }
+    setState(() => _isLoading = false);
   }
 
   // --- LÓGICA DE GUARDADO ---
@@ -178,6 +166,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
               ],
             ),
             const Divider(color: Colors.white24, height: 20),
+            const SizedBox(height: 10),
             ...children,
           ],
         ),
@@ -188,87 +177,170 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   // --- DIÁLOGOS PARA AGREGAR ÍTEMS ---
 
   void _dialogAddMaquina() {
-    String? selMaquina = _mockMaquinas.first;
-    String? selChofer = _mockEmpleadosInternos.first;
+    String? selMaquina =
+        _listaMaquinas.isNotEmpty ? _listaMaquinas.first : 'Otro';
+    String? selChofer =
+        _listaChoferes.isNotEmpty ? _listaChoferes.first : 'Otro';
+    final manualMaquinaController = TextEditingController();
+    final manualChoferController = TextEditingController();
     final hInicioController = TextEditingController(text: '07:00');
     final hFinController = TextEditingController(text: '18:00');
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.corporateCard,
-        title: const Text('Agregar Máquina',
-            style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              dropdownColor: AppColors.corporateCard,
-              style: const TextStyle(color: Colors.white),
-              initialValue: selMaquina,
-              items: _mockMaquinas
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (v) => selMaquina = v,
-              decoration: const InputDecoration(
-                  labelText: 'Máquina',
-                  labelStyle: TextStyle(color: Colors.white70)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.corporateCard,
+          title: const Text('Agregar Máquina',
+              style: TextStyle(color: Colors.white)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  dropdownColor: Colors.white,
+                  style: const TextStyle(color: Colors.black87),
+                  initialValue: selMaquina,
+                  items: [..._listaMaquinas, 'Otro']
+                      .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e,
+                              style: const TextStyle(color: Colors.black87))))
+                      .toList(),
+                  onChanged: (v) => setDialogState(() => selMaquina = v),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Máquina',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: 'Seleccione una máquina',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+                if (selMaquina == 'Otro') ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: manualMaquinaController,
+                    style: const TextStyle(color: Colors.black87),
+                    decoration: AppStyles.inputDecoration(
+                      label: 'Nombre Máquina (Manual)',
+                      labelStyle: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.bold),
+                      hintText: 'Ej: Retroexcavadora X',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  dropdownColor: Colors.white,
+                  style: const TextStyle(color: Colors.black87),
+                  initialValue: selChofer,
+                  items: [..._listaChoferes, 'Otro']
+                      .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e,
+                              style: const TextStyle(color: Colors.black87))))
+                      .toList(),
+                  onChanged: (v) => setDialogState(() => selChofer = v),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Chofer Interno',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: 'Seleccione un chofer',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+                if (selChofer == 'Otro') ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: manualChoferController,
+                    style: const TextStyle(color: Colors.black87),
+                    decoration: AppStyles.inputDecoration(
+                      label: 'Nombre Chofer (Manual)',
+                      labelStyle: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.bold),
+                      hintText: 'Ej: Carlos Gómez',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                TextField(
+                  controller: hInicioController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Hora Inicio',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: '07:00',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: hFinController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Hora Final',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: '18:00',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            DropdownButtonFormField<String>(
-              dropdownColor: AppColors.corporateCard,
-              style: const TextStyle(color: Colors.white),
-              initialValue: selChofer,
-              items: _mockEmpleadosInternos
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (v) => selChofer = v,
-              decoration: const InputDecoration(
-                  labelText: 'Chofer Interno',
-                  labelStyle: TextStyle(color: Colors.white70)),
-            ),
-            TextField(
-              controller: hInicioController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                  labelText: 'Hora Inicio',
-                  labelStyle: TextStyle(color: Colors.white70)),
-            ),
-            TextField(
-              controller: hFinController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                  labelText: 'Hora Final',
-                  labelStyle: TextStyle(color: Colors.white70)),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar',
+                    style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () {
+                final maquinaFinal = selMaquina == 'Otro'
+                    ? manualMaquinaController.text.trim()
+                    : selMaquina!;
+                final choferFinal = selChofer == 'Otro'
+                    ? manualChoferController.text.trim()
+                    : selChofer!;
+                if (maquinaFinal.isNotEmpty && choferFinal.isNotEmpty) {
+                  setState(() {
+                    _maquinas.add(MaquinaItem(
+                      maquina: maquinaFinal,
+                      chofer: choferFinal,
+                      horaInicio: hInicioController.text,
+                      horaFinal: hFinController.text,
+                    ));
+                  });
+                  Navigator.pop(ctx);
+                }
+              },
+              child: const Text('Agregar',
+                  style: TextStyle(color: AppColors.beigePastel)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _maquinas.add(MaquinaItem(
-                  maquina: selMaquina!,
-                  chofer: selChofer!,
-                  horaInicio: hInicioController.text,
-                  horaFinal: hFinController.text,
-                ));
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text('Agregar',
-                style: TextStyle(color: AppColors.beigePastel)),
-          ),
-        ],
       ),
     );
   }
 
   void _dialogAddMaterial() {
-    String? selMaterial = _mockMateriales.first;
+    String? selMaterial =
+        _listaMateriales.isNotEmpty ? _listaMateriales.first : 'Otro';
+    final manualMaterialController = TextEditingController();
     final cantController = TextEditingController();
     String selUnidad = 'm3';
 
@@ -283,36 +355,73 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                dropdownColor: AppColors.corporateCard,
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.black87),
                 initialValue: selMaterial,
-                items: _mockMateriales
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                items: [..._listaMateriales, 'Otro']
+                    .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e,
+                            style: const TextStyle(color: Colors.black87))))
                     .toList(),
-                onChanged: (v) => selMaterial = v,
-                decoration: const InputDecoration(
-                    labelText: 'Material',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                onChanged: (v) => setDialogState(() => selMaterial = v),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Material',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Seleccione material',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
               ),
+              if (selMaterial == 'Otro') ...[
+                const SizedBox(height: 10),
+                TextField(
+                  controller: manualMaterialController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Nombre Material (Manual)',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: 'Ej: Arena Fina',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
               TextField(
                 controller: cantController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Cantidad',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Cantidad',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Ej: 10',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
               ),
+              const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                dropdownColor: AppColors.corporateCard,
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.black87),
                 initialValue: selUnidad,
                 items: ['m3', 'kg']
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e,
+                            style: const TextStyle(color: Colors.black87))))
                     .toList(),
                 onChanged: (v) => setDialogState(() => selUnidad = v!),
-                decoration: const InputDecoration(
-                    labelText: 'Unidad',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Unidad',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  fillColor: Colors.white,
+                ),
               ),
             ],
           ),
@@ -323,14 +432,19 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                     style: TextStyle(color: Colors.grey))),
             TextButton(
               onPressed: () {
-                setState(() {
-                  _materiales.add(MaterialItem(
-                    material: selMaterial!,
-                    cantidad: double.tryParse(cantController.text) ?? 0,
-                    unidad: selUnidad,
-                  ));
-                });
-                Navigator.pop(ctx);
+                final materialFinal = selMaterial == 'Otro'
+                    ? manualMaterialController.text.trim()
+                    : selMaterial!;
+                if (materialFinal.isNotEmpty) {
+                  setState(() {
+                    _materiales.add(MaterialItem(
+                      material: materialFinal,
+                      cantidad: double.tryParse(cantController.text) ?? 0,
+                      unidad: selUnidad,
+                    ));
+                  });
+                  Navigator.pop(ctx);
+                }
               },
               child: const Text('Agregar',
                   style: TextStyle(color: AppColors.beigePastel)),
@@ -342,67 +456,111 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   }
 
   void _dialogAddOtroEquipo() {
-    String? selEq = _mockOtrosEquipos.first;
+    String? selEq =
+        _listaOtrosEquipos.isNotEmpty ? _listaOtrosEquipos.first : 'Otro';
+    final manualEqController = TextEditingController();
     final hInicioController = TextEditingController(text: '07:00');
     final hFinController = TextEditingController(text: '18:00');
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.corporateCard,
-        title: const Text('Agregar Otro Equipo',
-            style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              dropdownColor: AppColors.corporateCard,
-              style: const TextStyle(color: Colors.white),
-              initialValue: selEq,
-              items: _mockOtrosEquipos
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (v) => selEq = v,
-              decoration: const InputDecoration(
-                  labelText: 'Equipo',
-                  labelStyle: TextStyle(color: Colors.white70)),
-            ),
-            TextField(
-              controller: hInicioController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                  labelText: 'Hora Inicio',
-                  labelStyle: TextStyle(color: Colors.white70)),
-            ),
-            TextField(
-              controller: hFinController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                  labelText: 'Hora Final',
-                  labelStyle: TextStyle(color: Colors.white70)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.corporateCard,
+          title: const Text('Agregar Otro Equipo',
+              style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.black87),
+                initialValue: selEq,
+                items: [..._listaOtrosEquipos, 'Otro']
+                    .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e,
+                            style: const TextStyle(color: Colors.black87))))
+                    .toList(),
+                onChanged: (v) => setDialogState(() => selEq = v),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Equipo',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Seleccione equipo',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
+              ),
+              if (selEq == 'Otro') ...[
+                const SizedBox(height: 10),
+                TextField(
+                  controller: manualEqController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Nombre Equipo (Manual)',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: 'Ej: Generador 5kW',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              TextField(
+                controller: hInicioController,
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Hora Inicio',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: '07:00',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: hFinController,
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Hora Final',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: '18:00',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar',
+                    style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () {
+                final eqFinal =
+                    selEq == 'Otro' ? manualEqController.text.trim() : selEq!;
+                if (eqFinal.isNotEmpty) {
+                  setState(() {
+                    _otrosEquipos.add(OtroEquipoItem(
+                      equipo: eqFinal,
+                      horaInicio: hInicioController.text,
+                      horaFinal: hFinController.text,
+                    ));
+                  });
+                  Navigator.pop(ctx);
+                }
+              },
+              child: const Text('Agregar',
+                  style: TextStyle(color: AppColors.beigePastel)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _otrosEquipos.add(OtroEquipoItem(
-                  equipo: selEq!,
-                  horaInicio: hInicioController.text,
-                  horaFinal: hFinController.text,
-                ));
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text('Agregar',
-                style: TextStyle(color: AppColors.beigePastel)),
-          ),
-        ],
       ),
     );
   }
@@ -426,49 +584,82 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                dropdownColor: AppColors.corporateCard,
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.black87),
                 initialValue: selCap,
                 items: _mockCapacidadesCamion
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e,
+                            style: const TextStyle(color: Colors.black87))))
                     .toList(),
                 onChanged: (v) => selCap = v,
-                decoration: const InputDecoration(
-                    labelText: 'Capacidad',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Capacidad',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Ej: 10 m3',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: marcaController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Marca',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Marca',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Ej: Mercedes-Benz',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: matController,
                 textCapitalization: TextCapitalization.characters,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Matrícula',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Matrícula',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Ej: ABC 123',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: choferController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Chofer (Externo)',
-                    labelStyle: TextStyle(color: Colors.white70)),
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Chofer (Externo)',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Ej: Roberto Sosa',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
               ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: viajesController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          labelText: 'Viajes',
-                          labelStyle: TextStyle(color: Colors.white70)),
+                      style: const TextStyle(color: Colors.black87),
+                      decoration: AppStyles.inputDecoration(
+                        label: 'Viajes',
+                        labelStyle: TextStyle(
+                            color: Colors.grey.shade800,
+                            fontWeight: FontWeight.bold),
+                        hintText: 'Ej: 5',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        fillColor: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -476,10 +667,16 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                     child: TextField(
                       controller: horasController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          labelText: 'Horas',
-                          labelStyle: TextStyle(color: Colors.white70)),
+                      style: const TextStyle(color: Colors.black87),
+                      decoration: AppStyles.inputDecoration(
+                        label: 'Horas',
+                        labelStyle: TextStyle(
+                            color: Colors.grey.shade800,
+                            fontWeight: FontWeight.bold),
+                        hintText: 'Ej: 8',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        fillColor: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -515,54 +712,97 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   }
 
   void _dialogAddPeon() {
-    final nombreController = TextEditingController();
+    String? selPeon = _listaPeones.isNotEmpty ? _listaPeones.first : 'Otro';
+    final manualPeonController = TextEditingController();
     final horasController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.corporateCard,
-        title: const Text('Agregar Peón/Ayudante',
-            style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nombreController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                  labelText: 'Nombre Completo',
-                  labelStyle: TextStyle(color: Colors.white70)),
-            ),
-            TextField(
-              controller: horasController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                  labelText: 'Horas Trabajadas',
-                  labelStyle: TextStyle(color: Colors.white70)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.corporateCard,
+          title: const Text('Agregar Peón/Ayudante',
+              style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.black87),
+                initialValue: selPeon,
+                items: [..._listaPeones, 'Otro']
+                    .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e,
+                            style: const TextStyle(color: Colors.black87))))
+                    .toList(),
+                onChanged: (v) => setDialogState(() => selPeon = v),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Nombre Personal',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Seleccione personal',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
+              ),
+              if (selPeon == 'Otro') ...[
+                const SizedBox(height: 10),
+                TextField(
+                  controller: manualPeonController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: AppStyles.inputDecoration(
+                    label: 'Nombre Completo (Manual)',
+                    labelStyle: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.bold),
+                    hintText: 'Ej: Pedro López',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              TextField(
+                controller: horasController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.black87),
+                decoration: AppStyles.inputDecoration(
+                  label: 'Horas Trabajadas',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+                  hintText: 'Ej: 8.5',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  fillColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar',
+                    style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () {
+                final nombreFinal = selPeon == 'Otro'
+                    ? manualPeonController.text.trim()
+                    : selPeon!;
+                if (nombreFinal.isNotEmpty) {
+                  setState(() {
+                    _peones.add(PeonItem(
+                      nombre: nombreFinal,
+                      horas: double.tryParse(horasController.text) ?? 0,
+                    ));
+                  });
+                  Navigator.pop(ctx);
+                }
+              },
+              child: const Text('Agregar',
+                  style: TextStyle(color: AppColors.beigePastel)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _peones.add(PeonItem(
-                  nombre: nombreController.text.trim(),
-                  horas: double.tryParse(horasController.text) ?? 0,
-                ));
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text('Agregar',
-                style: TextStyle(color: AppColors.beigePastel)),
-          ),
-        ],
       ),
     );
   }
@@ -652,12 +892,16 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                 children: [
                   TextFormField(
                     controller: _contratanteController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Señor o Empresa Contratante',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white24)),
+                    style: const TextStyle(color: Colors.black87),
+                    decoration: AppStyles.inputDecoration(
+                      label: 'Señor o Empresa Contratante',
+                      labelStyle: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.bold),
+                      hintText: 'Ej: Juan Pérez o Constructora S.A.',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      fillColor: Colors.white,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -819,12 +1063,15 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                   TextFormField(
                     controller: _observacionesController,
                     maxLines: 3,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Observaciones',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white24)),
+                    style: const TextStyle(color: Colors.black87),
+                    decoration: AppStyles.inputDecoration(
+                      label: 'Observaciones',
+                      labelStyle: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.bold),
+                      hintText: 'Ej: Todo en orden, sin novedades.',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      fillColor: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),
