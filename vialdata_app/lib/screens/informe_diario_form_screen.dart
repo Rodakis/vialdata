@@ -152,7 +152,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                     Icon(icon, color: AppColors.beigePastel, size: 24),
                     const SizedBox(width: 10),
                     Text(title,
-                        style: AppStyles.titleMedium.copyWith(
+                        style: AppStyles.sectionTitle.copyWith(
                             color: AppColors.beigePastel,
                             fontWeight: FontWeight.bold)),
                   ],

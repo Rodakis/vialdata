@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/storage_service.dart';
 import '../services/pdf_service.dart';
 import '../models/informe_diario_model.dart';
 import '../models/obra_model.dart';
 import '../models/remito_model.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_styles.dart';
 import 'informe_diario_form_screen.dart';
 import 'remito_form_screen.dart';
 
@@ -17,11 +20,13 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late Future<_HistorySummary> _summaryFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _summaryFuture = _loadHistorySummary();
   }
 
   @override
@@ -42,11 +47,21 @@ class _HistoryScreenState extends State<HistoryScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildRemitosList(),
-          _buildInformesList(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildSummarySection(),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildRemitosList(),
+                _buildInformesList(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -110,8 +125,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               child: ListTile(
                 leading: const Icon(Icons.description, color: Colors.blue),
                 title: Text('$material - $cantidad'),
-                subtitle:
-                    Text('Obra: $obra\nFecha: $fechaTexto\nTap para editar...'),
+                subtitle: Text('Obra: $obra\nFecha: $fechaTexto'),
                 isThreeLine: true,
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -121,7 +135,12 @@ class _HistoryScreenState extends State<HistoryScreen>
                       onPressed: () =>
                           PdfService.generateAndShareRemito(remitoObj),
                     ),
-                    const Icon(Icons.edit, color: Colors.grey),
+                    TextButton(
+                      onPressed: () async {
+                        await _abrirEditorRemito(item);
+                      },
+                      child: const Text('Editar'),
+                    ),
                   ],
                 ),
                 onTap: () async {
@@ -181,7 +200,9 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
     );
 
-    setState(() {});
+    setState(() {
+      _summaryFuture = _loadHistorySummary();
+    });
   }
 
   // --- PESTAÑA 2: INFORMES ---
@@ -220,7 +241,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                     color: Colors.orange),
                 title: Text(titulo,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('Fecha: $fechaTexto\nTap para editar...'),
+                subtitle: Text('Fecha: $fechaTexto'),
                 isThreeLine: true,
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -230,7 +251,12 @@ class _HistoryScreenState extends State<HistoryScreen>
                       onPressed: () =>
                           PdfService.generateAndShareInforme(informeObj),
                     ),
-                    const Icon(Icons.edit, color: Colors.grey),
+                    TextButton(
+                      onPressed: () async {
+                        await _abrirEditorInforme(item);
+                      },
+                      child: const Text('Editar'),
+                    ),
                   ],
                 ),
                 onTap: () async {
@@ -264,7 +290,9 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
     );
 
-    setState(() {});
+    setState(() {
+      _summaryFuture = _loadHistorySummary();
+    });
   }
 
   Widget _emptyState(String text) {
@@ -279,4 +307,129 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
     );
   }
+
+  Widget _buildSummarySection() {
+    return FutureBuilder<_HistorySummary>(
+      future: _summaryFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final summary = snapshot.data!;
+        return Container(
+          decoration: AppStyles.surfaceSectionDecoration(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  _summaryChip('Remitos', summary.remitos.toString()),
+                  const SizedBox(width: 12),
+                  _summaryChip('Informes', summary.informes.toString()),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Chip(
+                      backgroundColor:
+                          AppColors.reminderAccent.withOpacity(0.15),
+                      label: const Text('Recordatorio diario 16:30',
+                          style: TextStyle(color: AppColors.reminderAccent)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(summary.lastTitle,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 4),
+              Text(summary.lastDate != null
+                  ? DateFormat('dd/MM/yyyy HH:mm').format(summary.lastDate!)
+                  : 'Aún no hay registros guardados'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _summaryChip(String label, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value,
+                style: const TextStyle(fontSize: 20, color: Colors.white)),
+            Text(label, style: const TextStyle(color: Colors.white60)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<_HistorySummary> _loadHistorySummary() async {
+    final remitos = await StorageService.getRemitos();
+    final informes = await StorageService.getInformes();
+    DateTime? lastDate;
+    String lastTitle = 'Sin registros guardados';
+    DateTime? lastDateShown;
+
+    void evaluate(String type, Map<String, dynamic> item) {
+      final fecha = _parseFecha(item['fecha']);
+      if (fecha == null) return;
+      if (lastDate == null || fecha.isAfter(lastDate!)) {
+        lastDate = fecha;
+        lastDateShown = fecha;
+        lastTitle = type == 'remito'
+            ? 'Remito ${item['nroRemito'] ?? 'N/D'} - ${item['obra'] ?? 'Obra desconocida'}'
+            : 'Informe ${item['obra'] ?? 'Sin obra'}';
+      }
+    }
+
+    for (final item in remitos) {
+      evaluate('remito', item);
+    }
+    for (final item in informes) {
+      evaluate('informe', item);
+    }
+
+    return _HistorySummary(
+      remitos: remitos.length,
+      informes: informes.length,
+      lastTitle: lastTitle,
+      lastDate: lastDateShown,
+    );
+  }
+
+  DateTime? _parseFecha(dynamic raw) {
+    if (raw == null) return null;
+    try {
+      return DateTime.parse(raw.toString());
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+class _HistorySummary {
+  final int remitos;
+  final int informes;
+  final String lastTitle;
+  final DateTime? lastDate;
+
+  _HistorySummary({
+    required this.remitos,
+    required this.informes,
+    required this.lastTitle,
+    required this.lastDate,
+  });
 }

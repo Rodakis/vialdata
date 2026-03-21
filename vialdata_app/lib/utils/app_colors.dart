@@ -24,4 +24,15 @@ class AppColors {
   static const Color beigePastel = Color(0xFFF5F5DC);
   static const Color beigePastelDark = Color(0xFFD2B48C);
   static const Color beigePastelLight = Color(0xFFFFFDF0);
+
+  // Gradientes y chips adicionales para la nueva experiencia
+  static const Color heroGradientStart = Color(0xFF0F1620);
+  static const Color heroGradientEnd = Color(0xFF1F2A3B);
+  static const Color heroCard = Color(0xFF222A36);
+  static const Color surfaceCard = Color(0xFF1F242C);
+  static const Color reminderAccent = Color(0xFFF9A825);
+  static const Color chipSuccess = Color(0xFF2E7D32);
+  static const Color chipWarning = Color(0xFFF57C00);
+  static const Color gridLine = Color(0xFF121926);
+  static const Color neonAccent = Color(0xFF24EAE1);
 }
